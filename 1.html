@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Terminal</title>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.1.0/lib/xterm.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.1.0/css/xterm.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #000; /* Set background color to black */
+            overflow: hidden;
+        }
+        #terminal {
+            width: 100%;
+            height: 100vh;
+        }
+        .s-about {
+            display: none; /* Hide other sections if needed */
+        }
+    </style>
+</head>
+<body>
+    <section id="about" class="s-about target-section">
+        <div class="row about-info wide" data-animate-block>
+            <div class="column lg-6 md-12 about-info__pic-block">
+                <div id="terminal"></div>
+            </div>
+            <div class="column lg-6 md-12">
+                <div class="about-info__text">
+                    <h2 class="text-pretitle with-line" data-animate-el>
+                        About
+                    </h2>
+                    <p class="drop-cap" data-animate-el>
+                        One day, I woke up at 3 AM and thought, "How many days have I left?!"
+                        <br> 
+                        So yeah, I wrote a program for it.<br>
+                        It was quite a simple concept. 
+                        I asked an LLM how many factors could reduce my lifespan.
+                         I wrote down all of them.
+                         Then, I started researching all night. 
+                        In the morning, I came up with quite a list. I added all of them to a Python file and entered my data. Then, I included the average lifespan for someone like me.
+                         In the end, I ran the Python file.
+                         <br>
+                        About 20,000 days, Not bad 😉. <br>You can get what kind of guy I am, can’t you?
+                        
+                    </p>
+                   
+                    <a href="#0" class="btn btn--medium u-fullwidth" data-animate-el>click to download Resume</a>
+                </div>
+            </div>
+        </div> <!-- about-info -->
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize the terminal
+            const term = new Terminal();
+            term.open(document.getElementById('terminal'));
+            term.setOption('cursorBlink', true);
+
+            let frames = [];
+            let frameIndex = 0;
+
+            fetch('animations/test.txt') // Replace with your file path
+                .then(response => response.text())
+                .then(data => {
+                    frames = data.split('\n\n'); // Split frames by double newlines
+                    startAnimation(); // Start animation after loading frames
+                })
+                .catch(error => console.error('Error loading ASCII animation:', error));
+
+            // Function to simulate typing
+            function typeFrame(frame, delay = 50) {
+                let i = 0;
+                const typingInterval = setInterval(() => {
+                    if (i < frame.length) {
+                        term.write(frame[i]); // Write one character at a time
+                        i++;
+                    } else {
+                        clearInterval(typingInterval); // Stop typing when the frame is complete
+                        setTimeout(nextFrame, 3000); // Delay before starting the next frame
+                    }
+                }, delay); // Delay between characters
+            }
+
+            function nextFrame() {
+                frameIndex++;
+                if (frameIndex >= frames.length) {
+                    frameIndex = 0; // Restart from the first frame
+                }
+                term.reset(); // Clear the terminal
+                term.write(frames[frameIndex]);
+                if (frameIndex < frames.length - 1) {
+                    setTimeout(nextFrame, 3000); // Delay before showing the next frame
+                }
+            }
+
+            function startAnimation() {
+                if (frames.length > 0) {
+                    // Start the animation
+                    term.reset(); // Clear any previous content
+                    frameIndex = 0; // Reset to the first frame
+                    typeFrame(frames[frameIndex], 50); // Start with normal speed
+                }
+            }
+
+            // Intersection Observer to start animation when terminal is in view
+            const terminalElement = document.getElementById('terminal');
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting && frames.length > 0) {
+                            // Start the animation
+                            term.reset(); // Clear any previous content
+                            frameIndex = 0; // Reset to the first frame
+                            typeFrame(frames[frameIndex], 50); // Start with normal speed
+                        } else {
+                            // Stop the animation when the terminal is out of view
+                            term.reset(); // Clear the terminal
+                            frameIndex = 0; // Reset to the first frame
+                        }
+                    });
+                },
+                {
+                    threshold: 0.3, // Trigger when 50% of the terminal is visible
+                }
+            );
+
+            // Observe the terminal element
+            observer.observe(terminalElement);
+        });
+    </script>
+</body>
+</html>
